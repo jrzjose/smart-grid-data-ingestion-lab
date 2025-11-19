@@ -1,0 +1,119 @@
+networks:
+  kfk-network:
+    driver: bridge
+services:
+  kafka1:
+    image: apache/kafka:4.1.0
+    container_name: kafka1
+    ports:
+      - "9092:9092"
+    environment:
+      # Configure listeners for both docker and host communication
+      KAFKA_LISTENERS: CONTROLLER://kafka1:9091,HOST://0.0.0.0:9092,DOCKER://0.0.0.0:9093
+      
+      KAFKA_ADVERTISED_LISTENERS: HOST://localhost:9092,DOCKER://kafka1:9093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,DOCKER:PLAINTEXT,HOST:PLAINTEXT
+
+      # Settings required for KRaft mode
+      KAFKA_NODE_ID: 101
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 101@kafka1:9091,102@kafka2:9091
+
+      # Listener to use for broker-to-broker communication
+      KAFKA_INTER_BROKER_LISTENER_NAME: DOCKER
+
+      # Required for a single node cluster
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_CLUSTER_ID: test-cluster-id
+    networks:
+      - kfk-network
+
+  kafka2:
+    image: apache/kafka:4.1.0
+    container_name: kafka2
+    ports:
+      - "9094:9094"
+    environment:
+      # Configure listeners for both docker and host communication
+      KAFKA_LISTENERS: CONTROLLER://kafka2:9091,HOST://0.0.0.0:9094,DOCKER://0.0.0.0:9093
+      
+      KAFKA_ADVERTISED_LISTENERS: HOST://localhost:9094,DOCKER://kafka2:9093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,DOCKER:PLAINTEXT,HOST:PLAINTEXT
+
+      # Settings required for KRaft mode
+      KAFKA_NODE_ID: 102
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 101@kafka1:9091,102@kafka2:9091
+
+      # Listener to use for broker-to-broker communication
+      KAFKA_INTER_BROKER_LISTENER_NAME: DOCKER
+
+      # Required for a single node cluster
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_CLUSTER_ID: test-cluster-id
+    networks:
+      - kfk-network
+
+  kafka-ui:
+    image: kafbat/kafka-ui:main
+    ports:
+      - 8080:8080
+    environment:
+      DYNAMIC_CONFIG_ENABLED: "true"
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka1:9093,kafka2:9093
+    depends_on:
+      - kafka1
+      - kafka2
+    networks:
+      - kfk-network
+
+  data-gen-service:
+    command: java -jar data-gen-kfk.jar
+    volumes:
+      - "./data-gen-kfk/build/libs:/build"
+    build: ./data-gen-kfk
+    networks:
+      - kfk-network
+
+  agg-data-service:
+    command: java -jar agg-kfk-producer.jar
+    volumes:
+      - "./agg-kfk-producer/build/libs:/build"
+    build: ./agg-kfk-producer
+    networks:
+      - kfk-network            
+
+  agg-ws-service:
+    command: java -jar agg-kfk-consumer-ws.jar
+    volumes:
+      - "./agg-kfk-consumer-ws/build/libs:/build"
+    build: ./agg-kfk-consumer-ws
+    networks:
+      - kfk-network            
+
+  pyspark:
+    image: jupyter/pyspark-notebook
+    volumes:
+      - "./spark:/sprk"
+    working_dir: /sprk
+    networks:
+      - kfk-network
+    ports:
+      - 9096:8888
+    environment:
+      # spark-submit --packages org.apache.spark:spark-sql-kafka-{{KAFKA_VERSION}}_2.12:{{SPARK_KAFKA_CONNECTOR_VERSION}} your_script.py
+      # maven: org.apache.spark:spark-sql-kafka-0-10_2.13:4.0.1
+      PYSPARK_SUBMIT_ARGS: --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0,org.apache.kafka:kafka-clients:3.5.0 pyspark-shell
+
+  rct-app:
+    build: ./rct-ui
+    working_dir: /workspace
+    volumes:
+      - "./rct-ui:/workspace"
+      - "/workspace/node_modules"
+    command: /bin/sh -c ./start.sh
+    ports:
+      - "8090:5173"

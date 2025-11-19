@@ -1,0 +1,1 @@
+ls -l && npm run dev -- --host

@@ -1,0 +1,5 @@
+topic: meter.data
+locations: 10
+minMeters: 20
+maxMeters: 30
+bootstrapServers: 127.0.0.1:9092, 127.0.0.1:9094
