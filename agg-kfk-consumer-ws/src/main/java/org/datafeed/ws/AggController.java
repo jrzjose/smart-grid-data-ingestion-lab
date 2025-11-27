@@ -18,6 +18,7 @@ public class AggController {
 	@MessageMapping("/agg-upd")
 	@SendTo("/topic/agg")
 	public Aggregations getAggregations(String ping) throws Exception {
+		Thread.sleep(500);
 		return dataConsumption.getAggregations();
 	}
 }

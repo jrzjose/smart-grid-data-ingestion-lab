@@ -34,7 +34,7 @@ public class MeterOutput implements Runnable {
         System.out.println("** Data gen for meter id:" + meter.getMeterId());
         while (!Thread.currentThread().isInterrupted()) {
             Date timestamp = new Date(System.currentTimeMillis());
-            int _reading = reading(meter.getConsumptionValue());
+            double _reading = reading(meter.getConsumptionValue());
             meter.setIntervalTime(timestamp.getTime());
             meter.setConsumptionValue(_reading);
 
@@ -62,11 +62,11 @@ public class MeterOutput implements Runnable {
 
     public int spin() {
         int min = 1;
-        int max = 5;
+        int max = 6;
         return r.nextInt((max - min) + 1) + min;
     }
 
-    public int reading(int value) {
+    public double reading(double value) {
 
         _spin = spin();
 
@@ -78,13 +78,16 @@ public class MeterOutput implements Runnable {
                 value++;
                 break;
             case 3:
-                value -= 10;
+                value -= 1;
                 break;
             case 4:
-                value += 10;
+                value += 1;
+                break;
+            case 5:
+                value = value/2;
                 break;
             default:
-                // Code block if no case matches
+                value = 0.1;
         }
 
         if (value < 0)

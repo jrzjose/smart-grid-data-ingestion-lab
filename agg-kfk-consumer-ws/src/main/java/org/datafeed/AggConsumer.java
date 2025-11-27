@@ -3,6 +3,7 @@ package org.datafeed;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -14,7 +15,6 @@ import org.datafeed.models.Consumption;
 import org.datafeed.models.CustomerType;
 import org.datafeed.models.Location;
 import org.datafeed.models.Meter;
-import org.datafeed.models.Aggregations;
 import org.lab.Config;
 
 import com.google.gson.JsonElement;
@@ -39,12 +39,15 @@ public class AggConsumer implements Runnable {
             );
     }
 
-    private List<CustomerType> customerTypes;
-    private List<Location> locations;
-    private Aggregations agg;
-    
-    public AggConsumer(Aggregations agg) {
-        this.agg = agg;
+    private Map<String, CustomerType> customerTypes;
+    private Map<String, Location> locations;
+    private Map<String, Meter> meters;
+
+    public AggConsumer(Map<String,CustomerType> customerTypes, Map<String,Location> locations,
+            Map<String,Meter> meters) {
+        this.customerTypes = customerTypes;
+        this.locations = locations;
+        this.meters = meters;
     }
 
     @Override
@@ -69,26 +72,27 @@ public class AggConsumer implements Runnable {
                     Consumption message = Consumption.builder()
                         .startTime(el.getAsJsonObject().get("start_time").getAsLong())
                         .endTime(el.getAsJsonObject().get("end_time").getAsLong())
-                        .energyConsumption(el.getAsJsonObject().get("consumption_value").getAsLong())
+                        .energyConsumption(el.getAsJsonObject().get("consumption_value").getAsDouble())
                         .build();
 
                     if (record.topic().equals(Config.settings.getAggMeterConsumption())) {
                         Meter meter = new Meter(message, el.getAsJsonObject().get("meter_id").getAsString());
-                        agg.getMeters().add(meter);
+                        meters.put(meter.getMeterId(), meter);
                         System.out.println("meter: " + meter);
                     }
                     else if (record.topic().equals(Config.settings.getAggLocationConsumption())) {
                         Location loc = new Location(message, el.getAsJsonObject().get("location_id").getAsString());
-                        agg.getLocations().add(loc);
+                        locations.put(loc.getLocationId(), loc);
                         System.out.println("location:" + loc);
                     }
                     else if (record.topic().equals(Config.settings.getAggConsumerType())) {
                         CustomerType ct = new CustomerType(message, el.getAsJsonObject().get("customerType").getAsString());
-                        agg.getCustomerTypes().add(ct);
+                        customerTypes.put(ct.getCustomerType(), ct);
                         System.out.println("customerType:" + ct);
                     }
                 } 
                 catch (Exception e) {
+                    System.out.println("Record:" + record.value());
                     e.printStackTrace();
                 }
             }

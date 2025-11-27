@@ -17,7 +17,7 @@ public class Meter {
     private int meterId;
     private long intervalTime;
     private int intervalLength;
-    private int consumptionValue;
+    private double consumptionValue;
     private String readingSource;
     private String locationId;
     private String customerType; //r=residential, c=commercial, i=industrial

@@ -1,6 +1,7 @@
 package org.datafeed.models;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -21,5 +22,11 @@ public class Aggregations {
         customerTypes = Collections.synchronizedList(new ArrayList<>());
         locations = Collections.synchronizedList(new ArrayList<>());
         meters = Collections.synchronizedList(new ArrayList<>());
+    }
+
+    public Aggregations(Collection<CustomerType> customerTypes, Collection<Location> locations, Collection<Meter> meters) {
+        this.customerTypes = new ArrayList<>(customerTypes);
+        this.locations = new ArrayList<>(locations);
+        this.meters = new ArrayList<>(meters);
     }
 }

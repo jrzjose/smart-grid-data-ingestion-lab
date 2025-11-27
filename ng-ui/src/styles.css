@@ -1,0 +1,30 @@
+/* You can add global styles to this file, and also import other style files */
+
+html, body { height: 100%; }
+body { margin: 0; font-family: Inter, Roboto, 'Helvetica Neue', Arial, sans-serif; }
+
+/* Light/Dark theme containers */
+.app-light-theme {
+  background: #f7f9fc;
+  color: rgba(0,0,0,0.87);
+}
+.app-light-theme .sidenav { border-right: 1px solid #e0e6ed; }
+.app-light-theme .toolbar { border-bottom: 1px solid #e0e6ed; }
+
+.app-dark-theme {
+  background: #121212;
+  color: rgba(255,255,255,0.87);
+}
+.app-dark-theme .sidenav { border-right: 1px solid #333; }
+.app-dark-theme .toolbar { border-bottom: 1px solid #333; }
+
+.app-container { height: 100vh; }
+.content { padding: 16px; }
+
+.menu-button { margin-right: 8px; display: none; }
+.title { font-weight: 600; }
+.spacer { flex: 1 1 auto; }
+
+@media (max-width: 768px) {
+  .menu-button { display: inline-flex; }
+}

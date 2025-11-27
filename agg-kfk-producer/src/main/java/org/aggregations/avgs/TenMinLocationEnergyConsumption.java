@@ -17,7 +17,7 @@ public class TenMinLocationEnergyConsumption {
     public static void setup(final KStream<String, String> stream) {
         final TimeWindows timeWindows = TimeWindows.ofSizeWithNoGrace(Duration.ofMinutes(10L));
         final Serde<Windowed<String>> windowedSerde = WindowedSerdes.timeWindowedSerdeFrom(String.class, timeWindows.size());
-        final Serde<Long> longSerde = Serdes.Long();
+        final Serde<Double> doubleSerde = Serdes.Double();
 
         stream
             .selectKey((k, value) -> {
@@ -35,17 +35,17 @@ public class TenMinLocationEnergyConsumption {
             .mapValues(value -> {
                 return JsonParser.parseString(value)
                         .getAsJsonObject().get("consumption_value")
-                        .getAsLong();
+                        .getAsDouble();
             })
-            .groupByKey(Grouped.with(Serdes.String(), Serdes.Long()))
+            .groupByKey(Grouped.with(Serdes.String(), Serdes.Double()))
             .windowedBy(timeWindows)
             .aggregate(
-                () -> 0L, // Initializer: initial sum is 0.0
+                () -> 0D, // Initializer: initial sum is 0.0
                 (aggKey, newValue, aggValue) -> { 
                     // System.out.println("aggKey:"+aggKey + " aggValue:"+aggValue );
                     return aggValue + newValue;
                 },
-                Materialized.as(LOCATION_CONSUMPTION_STORE).with(Serdes.String(), longSerde)
+                Materialized.as(LOCATION_CONSUMPTION_STORE).with(Serdes.String(), doubleSerde)
             )
             .toStream()
             .mapValues((key, value) -> {

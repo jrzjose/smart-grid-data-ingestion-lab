@@ -17,7 +17,7 @@ public class CustomerTypeEnergyConsumption {
     public static void setup(final KStream<String, String> stream) {
         final TimeWindows timeWindows = TimeWindows.ofSizeWithNoGrace(Duration.ofMinutes(15L));
         final Serde<Windowed<String>> windowedSerde = WindowedSerdes.timeWindowedSerdeFrom(String.class, timeWindows.size());
-        final Serde<Long> longSerde = Serdes.Long();
+        final Serde<Double> doubleSerde = Serdes.Double();
 
         stream
             .selectKey((k, value) -> {
@@ -34,17 +34,17 @@ public class CustomerTypeEnergyConsumption {
             .mapValues(value -> {
                 return JsonParser.parseString(value)
                         .getAsJsonObject().get("consumption_value")
-                        .getAsLong();
+                        .getAsDouble();
             })
-            .groupByKey(Grouped.with(Serdes.String(), Serdes.Long()))
+            .groupByKey(Grouped.with(Serdes.String(), Serdes.Double()))
             .windowedBy(timeWindows)
             .aggregate(
-                () -> 0L, // Initializer: initial sum is 0.0
+                () -> 0D, // Initializer: initial sum is 0.0
                 (aggKey, newValue, aggValue) -> { 
                     // System.out.println("aggKey:"+aggKey + " aggValue:"+aggValue ); 
                     return aggValue + newValue;
                 },
-                Materialized.as(CUSTOMER_TYPE_CONSUMPTION_STORE).with(Serdes.String(), longSerde)
+                Materialized.as(CUSTOMER_TYPE_CONSUMPTION_STORE).with(Serdes.String(), doubleSerde)
             )
             .toStream()
             .mapValues((key, value) -> {
@@ -53,7 +53,7 @@ public class CustomerTypeEnergyConsumption {
                         "customerType:'" + key.key() +
                         "', start_time:" + kfkKey.getStartTime() + 
                         ", end_time:"  + kfkKey.getEndTime() +                
-                        ", energy_consumption:" + value +
+                        ", consumption_value:" + value +
                         "}";
             })
             .to(CUSTOMER_TYPE_CONSUMPTION_TOPIC, Produced.with(windowedSerde, Serdes.String()));

@@ -1,0 +1,9 @@
+
+.menu-button { margin-right: 8px; display: none; }
+.title { font-weight: 600; }
+.spacer { flex: 1 1 auto; }
+
+/* Show toggle button on small screens */
+@media (max-width: 768px) {
+  .menu-button { display: inline-flex; }
+}

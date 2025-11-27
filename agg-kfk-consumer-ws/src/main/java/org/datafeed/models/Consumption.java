@@ -14,7 +14,7 @@ import lombok.ToString;
 @ToString
 @Builder
 public class Consumption {
-    private long energyConsumption;
+    private double energyConsumption;
     private long startTime;
     private long endTime;
 }

@@ -1,35 +1,37 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
 
-function App() {
-  const [count, setCount] = useState(0)
+import * as React from 'react';
+import Box from '@mui/material/Box';
+import Toolbar from '@mui/material/Toolbar';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import Header from './components/Header';
+import Sidebar from './components/Sidebar';
+import Dashboard from './pages/Dashboard';
+import Locations from './pages/Locations';
+import Visualizations from './pages/Visualizations';
+import Meters from './pages/Meters';
+
+const drawerWidth = 260;
+
+export default function App(): JSX.Element {
+  const [mobileOpen, setMobileOpen] = React.useState(false);
+  const handleToggleSidebar = () => setMobileOpen((prev) => !prev);
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
-}
+    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
+      <Header drawerWidth={drawerWidth} onMenuClick={handleToggleSidebar} />
+      <Sidebar drawerWidth={drawerWidth} mobileOpen={mobileOpen} onClose={() => setMobileOpen(false)} />
 
-export default App
+      <Box component="main" sx={{ width: `calc(100% - ${drawerWidth}px)`, marginLeft: `${drawerWidth}px` }} >
+        {/* sx={{ flexGrow: 1, p: { xs: 2, md: 3 }, width: { md: `calc(70% - ${drawerWidth}px)` } }} */}
+        <Toolbar />
+        <Routes>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/locations" element={<Locations />} />
+          <Route path="/visualizations" element={<Visualizations />} />
+          <Route path="/meters" element={<Meters />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Box>
+    </Box>
+  );
+}
